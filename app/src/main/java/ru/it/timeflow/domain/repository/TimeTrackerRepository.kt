@@ -27,6 +27,11 @@ interface TimeTrackerRepository {
 
     suspend fun stopTracking()
 
+    suspend fun updateEntryNote(
+        entryId: Long,
+        note: String?,
+    )
+
     suspend fun addCategory(
         name: String,
         emoji: String,

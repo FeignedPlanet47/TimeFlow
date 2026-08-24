@@ -92,6 +92,18 @@ class TimeTrackerRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun updateEntryNote(
+        entryId: Long,
+        note: String?,
+    ) {
+        timeEntryDao.updateNote(
+            entryId = entryId,
+            note = note
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() },
+        )
+    }
+
     override suspend fun addCategory(
         name: String,
         emoji: String,

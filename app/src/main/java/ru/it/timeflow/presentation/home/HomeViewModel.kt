@@ -22,6 +22,7 @@ import ru.it.timeflow.domain.usecase.ObserveTasksByCategoryUseCase
 import ru.it.timeflow.domain.usecase.SeedDefaultCategoriesUseCase
 import ru.it.timeflow.domain.usecase.StartTrackingUseCase
 import ru.it.timeflow.domain.usecase.StopTrackingUseCase
+import ru.it.timeflow.domain.usecase.UpdateTimeEntryNoteUseCase
 import ru.it.timeflow.util.dayBoundsMillis
 import javax.inject.Inject
 
@@ -34,6 +35,7 @@ class HomeViewModel @Inject constructor(
     observeTasksByCategory: ObserveTasksByCategoryUseCase,
     private val startTracking: StartTrackingUseCase,
     private val stopTracking: StopTrackingUseCase,
+    private val updateTimeEntryNote: UpdateTimeEntryNoteUseCase,
     private val addTask: AddTaskUseCase,
     seedDefaults: SeedDefaultCategoriesUseCase,
 ) : ViewModel() {
@@ -154,6 +156,18 @@ class HomeViewModel @Inject constructor(
             addTask(
                 categoryId = categoryId,
                 name = normalizedName,
+            )
+        }
+    }
+
+    fun saveNote(
+        entryId: Long,
+        note: String,
+    ) {
+        viewModelScope.launch {
+            updateTimeEntryNote(
+                entryId = entryId,
+                note = note,
             )
         }
     }

@@ -18,6 +18,18 @@ interface TimeEntryDao {
 
     @Query(
         """
+        UPDATE time_entries
+        SET note = :note
+        WHERE id = :entryId
+        """
+    )
+    suspend fun updateNote(
+        entryId: Long,
+        note: String?,
+    )
+
+    @Query(
+        """
         SELECT
             e.id AS entryId,
             e.categoryId AS categoryId,

@@ -28,9 +28,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -63,6 +68,7 @@ fun HomeRoute(
         onAddTask = viewModel::addTask,
         onDismissTaskPicker =
             viewModel::closeTaskPicker,
+        onSaveNote = viewModel::saveNote,
         onStopClick = viewModel::stop,
     )
 }
@@ -75,6 +81,7 @@ fun HomeScreen(
     onTaskClick: (Task) -> Unit,
     onAddTask: (String) -> Unit,
     onDismissTaskPicker: () -> Unit,
+    onSaveNote: (Long, String) -> Unit,
     onStopClick: () -> Unit,
 ) {
     if (state.isLoading) {
@@ -121,6 +128,7 @@ fun HomeScreen(
                 ActiveTimerCard(
                     entry = state.activeEntry,
                     nowMillis = state.nowMillis,
+                    onSaveNote = onSaveNote,
                     onStop = onStopClick,
                 )
             }
@@ -217,6 +225,7 @@ fun HomeScreen(
 private fun ActiveTimerCard(
     entry: TimeEntry?,
     nowMillis: Long,
+    onSaveNote: (Long, String) -> Unit,
     onStop: () -> Unit,
 ) {
     Card(
@@ -255,6 +264,15 @@ private fun ActiveTimerCard(
                         MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
+
+                var noteText by remember(
+                    entry.id,
+                    entry.note,
+                ) {
+                    mutableStateOf(
+                        entry.note.orEmpty()
+                    )
+                }
 
                 Text(
                     "${entry.categoryEmoji} ${entry.categoryName}",
@@ -299,6 +317,45 @@ private fun ActiveTimerCard(
                 )
 
                 Spacer(Modifier.height(18.dp))
+
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = {
+                        noteText = it
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text("Заметка")
+                    },
+                    placeholder = {
+                        Text(
+                            "Например: доделать экран статистики"
+                        )
+                    },
+                    minLines = 2,
+                    maxLines = 5,
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(
+                        enabled =
+                            noteText.trim() !=
+                                    entry.note.orEmpty().trim(),
+                        onClick = {
+                            onSaveNote(
+                                entry.id,
+                                noteText,
+                            )
+                        },
+                    ) {
+                        Text("Сохранить заметку")
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
 
                 Button(
                     onClick = onStop,
@@ -422,6 +479,17 @@ private fun EntryCard(
                             MaterialTheme.colorScheme.primary,
                         style =
                             MaterialTheme.typography.bodyMedium,
+                    )
+                }
+
+                entry.note?.let { note ->
+                    Text(
+                        text = note,
+                        style =
+                            MaterialTheme.typography.bodySmall,
+                        color =
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
                     )
                 }
 
