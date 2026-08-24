@@ -47,29 +47,46 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ru.it.timeflow.domain.model.Category
 import ru.it.timeflow.domain.model.Task
 import ru.it.timeflow.domain.model.TimeEntry
+import ru.it.timeflow.presentation.home.components.ManualEntryBottomSheet
 import ru.it.timeflow.presentation.home.components.TaskPickerBottomSheet
+import ru.it.timeflow.presentation.home.components.TodayTimeline
+import ru.it.timeflow.presentation.home.timeline.TimelineItem
 import ru.it.timeflow.util.formatClockTime
 import ru.it.timeflow.util.formatDuration
 import ru.it.timeflow.util.formatDurationCompact
 
 @Composable
 fun HomeRoute(
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel =
+        hiltViewModel(),
 ) {
     val state by
-    viewModel.state.collectAsStateWithLifecycle()
+    viewModel
+        .state
+        .collectAsStateWithLifecycle()
 
     HomeScreen(
         state = state,
-        onCategoryClick = viewModel::start,
+        onCategoryClick =
+            viewModel::start,
         onCategoryLongClick =
             viewModel::openTaskPicker,
-        onTaskClick = viewModel::startTask,
-        onAddTask = viewModel::addTask,
+        onTaskClick =
+            viewModel::startTask,
+        onAddTask =
+            viewModel::addTask,
         onDismissTaskPicker =
             viewModel::closeTaskPicker,
-        onSaveNote = viewModel::saveNote,
-        onStopClick = viewModel::stop,
+        onSaveNote =
+            viewModel::saveNote,
+        onTimelineGapClick =
+            viewModel::openManualEntry,
+        onDismissManualEntry =
+            viewModel::closeManualEntry,
+        onAddManualEntry =
+            viewModel::addManualEntry,
+        onStopClick =
+            viewModel::stop,
     )
 }
 
@@ -82,159 +99,245 @@ fun HomeScreen(
     onAddTask: (String) -> Unit,
     onDismissTaskPicker: () -> Unit,
     onSaveNote: (Long, String) -> Unit,
+    onTimelineGapClick:
+        (TimelineItem.Gap) -> Unit,
+    onDismissManualEntry: () -> Unit,
+    onAddManualEntry: (
+        categoryId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        taskName: String?,
+        note: String?,
+    ) -> Unit,
     onStopClick: () -> Unit,
 ) {
     if (state.isLoading) {
         Box(
-            Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+            modifier =
+                Modifier.fillMaxSize(),
+            contentAlignment =
+                Alignment.Center,
         ) {
             CircularProgressIndicator()
         }
         return
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
+    LazyColumn(
+        modifier =
+            Modifier.fillMaxSize(),
+        contentPadding =
+            PaddingValues(20.dp),
+        verticalArrangement =
+            Arrangement.spacedBy(
+                18.dp
+            ),
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement =
-                Arrangement.spacedBy(18.dp),
-        ) {
-            item {
-                Text(
-                    "Сегодня",
-                    style =
-                        MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                )
+        item {
+            Text(
+                text = "Сегодня",
+                style =
+                    MaterialTheme
+                        .typography
+                        .headlineLarge,
+                fontWeight =
+                    FontWeight.Bold,
+            )
 
-                Text(
+            Text(
+                text =
                     "Учтено ${
                         formatDurationCompact(
                             state.todayTrackedMillis
                         )
                     }",
-                    style =
-                        MaterialTheme.typography.bodyLarge,
-                    color =
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodyLarge,
+                color =
+                    MaterialTheme
+                        .colorScheme
+                        .onSurfaceVariant,
+            )
+        }
 
-            item {
-                ActiveTimerCard(
-                    entry = state.activeEntry,
-                    nowMillis = state.nowMillis,
-                    onSaveNote = onSaveNote,
-                    onStop = onStopClick,
-                )
-            }
+        item {
+            ActiveTimerCard(
+                entry =
+                    state.activeEntry,
+                nowMillis =
+                    state.nowMillis,
+                onSaveNote =
+                    onSaveNote,
+                onStop =
+                    onStopClick,
+            )
+        }
 
-            item {
-                Text(
+        item {
+            Text(
+                text =
                     "Начать занятие",
-                    style =
-                        MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                style =
+                    MaterialTheme
+                        .typography
+                        .titleLarge,
+                fontWeight =
+                    FontWeight
+                        .SemiBold,
+            )
 
-                Spacer(
-                    Modifier.height(10.dp)
-                )
+            Spacer(
+                Modifier.height(10.dp)
+            )
 
-                LazyRow(
-                    horizontalArrangement =
-                        Arrangement.spacedBy(10.dp),
-                ) {
-                    items(
+            LazyRow(
+                horizontalArrangement =
+                    Arrangement
+                        .spacedBy(
+                            10.dp
+                        ),
+            ) {
+                items(
+                    items =
                         state.categories,
-                        key = { it.id },
-                    ) { category ->
+                    key = {
+                        it.id
+                    },
+                ) { category ->
 
-                        CategoryChip(
-                            category = category,
-                            onClick = onCategoryClick,
-                            onLongClick =
-                                onCategoryLongClick,
-                        )
-                    }
+                    CategoryChip(
+                        category =
+                            category,
+                        onClick =
+                            onCategoryClick,
+                        onLongClick =
+                            onCategoryLongClick,
+                    )
                 }
+            }
 
-                Spacer(
-                    Modifier.height(8.dp)
+            Spacer(
+                Modifier.height(8.dp)
+            )
+
+            Text(
+                text =
+                    "Нажмите — начать. Удерживайте — выбрать конкретную задачу.",
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodySmall,
+                color =
+                    MaterialTheme
+                        .colorScheme
+                        .onSurfaceVariant,
+            )
+        }
+
+        item {
+            Column {
+                Text(
+                    text =
+                        "Временная шкала",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .titleLarge,
+                    fontWeight =
+                        FontWeight
+                            .SemiBold,
                 )
 
                 Text(
                     text =
-                        "Нажмите — начать. Удерживайте — выбрать конкретную задачу.",
+                        "Нажмите на пустой промежуток, если забыли включить таймер.",
                     style =
-                        MaterialTheme.typography.bodySmall,
+                        MaterialTheme
+                            .typography
+                            .bodySmall,
                     color =
-                        MaterialTheme.colorScheme.onSurfaceVariant,
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant,
                 )
             }
+        }
 
-            item {
-                Text(
-                    "Последние",
-                    style =
-                        MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
+        item {
+            TodayTimeline(
+                items =
+                    state.timelineItems,
+                nowMillis =
+                    state.nowMillis,
+                onGapClick =
+                    onTimelineGapClick,
+            )
+        }
 
-            items(
-                state.todayEntries.take(8),
-                key = { it.id },
-            ) { entry ->
-                EntryCard(
-                    entry = entry,
-                    nowMillis = state.nowMillis,
-                )
-            }
-
-            if (state.todayEntries.isEmpty()) {
-                item {
-                    Text(
-                        "Пока нет записей. Выберите занятие выше — таймер запустится сразу.",
-                        color =
-                            MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+        item {
+            Spacer(
+                Modifier.height(12.dp)
+            )
         }
     }
 
-    state.taskPickerCategory?.let { category ->
+    state.taskPickerCategory
+        ?.let { category ->
 
-        TaskPickerBottomSheet(
-            categoryName =
-                "${category.emoji} ${category.name}",
-            tasks = state.tasksForPicker,
-            onTaskClick = onTaskClick,
-            onAddTask = onAddTask,
-            onDismiss = onDismissTaskPicker,
-        )
-    }
+            TaskPickerBottomSheet(
+                categoryName =
+                    "${category.emoji} ${category.name}",
+                tasks =
+                    state.tasksForPicker,
+                onTaskClick =
+                    onTaskClick,
+                onAddTask =
+                    onAddTask,
+                onDismiss =
+                    onDismissTaskPicker,
+            )
+        }
+
+    state.manualEntryGap
+        ?.let { gap ->
+
+            ManualEntryBottomSheet(
+                gap = gap,
+                categories =
+                    state.categories,
+                onSave =
+                    onAddManualEntry,
+                onDismiss =
+                    onDismissManualEntry,
+            )
+        }
 }
 
 @Composable
 private fun ActiveTimerCard(
     entry: TimeEntry?,
     nowMillis: Long,
-    onSaveNote: (Long, String) -> Unit,
+    onSaveNote:
+        (Long, String) -> Unit,
     onStop: () -> Unit,
 ) {
     Card(
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor =
-                MaterialTheme.colorScheme.primaryContainer
-        ),
-        modifier = Modifier.fillMaxWidth(),
+        shape =
+            RoundedCornerShape(
+                28.dp
+            ),
+        colors =
+            CardDefaults
+                .cardColors(
+                    containerColor =
+                        MaterialTheme
+                            .colorScheme
+                            .primaryContainer
+                ),
+        modifier =
+            Modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier
@@ -245,85 +348,121 @@ private fun ActiveTimerCard(
         ) {
             if (entry == null) {
                 Icon(
-                    Icons.Default.Timer,
-                    contentDescription = null,
-                    modifier = Modifier.size(42.dp),
+                    imageVector =
+                        Icons.Default.Timer,
+                    contentDescription =
+                        null,
+                    modifier =
+                        Modifier.size(
+                            42.dp
+                        ),
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(
+                    Modifier.height(12.dp)
+                )
 
                 Text(
-                    "Таймер не запущен",
+                    text =
+                        "Таймер не запущен",
                     style =
-                        MaterialTheme.typography.titleLarge,
+                        MaterialTheme
+                            .typography
+                            .titleLarge,
                 )
 
                 Text(
-                    "Выберите занятие ниже",
+                    text =
+                        "Выберите занятие ниже",
                     color =
-                        MaterialTheme.colorScheme.onSurfaceVariant,
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant,
                 )
             } else {
 
-                var noteText by remember(
+                var noteText by
+                remember(
                     entry.id,
                     entry.note,
                 ) {
                     mutableStateOf(
-                        entry.note.orEmpty()
+                        entry
+                            .note
+                            .orEmpty()
                     )
                 }
 
                 Text(
-                    "${entry.categoryEmoji} ${entry.categoryName}",
+                    text =
+                        "${entry.categoryEmoji} ${entry.categoryName}",
                     style =
-                        MaterialTheme.typography.titleLarge,
+                        MaterialTheme
+                            .typography
+                            .titleLarge,
                 )
 
-                entry.taskName?.let { taskName ->
+                entry.taskName
+                    ?.let { taskName ->
 
-                    Spacer(
-                        Modifier.height(4.dp)
-                    )
+                        Spacer(
+                            Modifier.height(
+                                4.dp
+                            )
+                        )
 
-                    Text(
-                        text = taskName,
-                        style =
-                            MaterialTheme.typography.titleMedium,
-                        color =
-                            MaterialTheme.colorScheme.primary,
-                    )
-                }
+                        Text(
+                            text =
+                                taskName,
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .titleMedium,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .primary,
+                        )
+                    }
 
-                Spacer(Modifier.height(14.dp))
+                Spacer(
+                    Modifier.height(14.dp)
+                )
 
                 Text(
                     text =
                         formatDuration(
-                            entry.durationMillis(
-                                nowMillis
-                            )
+                            entry
+                                .durationMillis(
+                                    nowMillis
+                                )
                         ),
                     fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight =
+                        FontWeight.Bold,
                 )
 
                 Text(
-                    "Начато в ${
-                        formatClockTime(
-                            entry.startTimeMillis
-                        )
-                    }"
+                    text =
+                        "Начато в ${
+                            formatClockTime(
+                                entry
+                                    .startTimeMillis
+                            )
+                        }"
                 )
 
-                Spacer(Modifier.height(18.dp))
+                Spacer(
+                    Modifier.height(18.dp)
+                )
 
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = {
                         noteText = it
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier =
+                        Modifier.fillMaxWidth(),
                     label = {
                         Text("Заметка")
                     },
@@ -337,13 +476,18 @@ private fun ActiveTimerCard(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    horizontalArrangement =
+                        Arrangement.End,
                 ) {
                     TextButton(
                         enabled =
                             noteText.trim() !=
-                                    entry.note.orEmpty().trim(),
+                                    entry
+                                        .note
+                                        .orEmpty()
+                                        .trim(),
                         onClick = {
                             onSaveNote(
                                 entry.id,
@@ -351,26 +495,37 @@ private fun ActiveTimerCard(
                             )
                         },
                     ) {
-                        Text("Сохранить заметку")
+                        Text(
+                            "Сохранить заметку"
+                        )
                     }
                 }
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(
+                    Modifier.height(10.dp)
+                )
 
                 Button(
                     onClick = onStop,
                     colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor =
-                                MaterialTheme.colorScheme.error
-                        ),
+                        ButtonDefaults
+                            .buttonColors(
+                                containerColor =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .error
+                            ),
                 ) {
                     Icon(
-                        Icons.Default.Stop,
-                        contentDescription = null,
+                        imageVector =
+                            Icons.Default.Stop,
+                        contentDescription =
+                            null,
                     )
 
-                    Spacer(Modifier.size(8.dp))
+                    Spacer(
+                        Modifier.size(8.dp)
+                    )
 
                     Text("Завершить")
                 }
@@ -386,20 +541,30 @@ private fun CategoryChip(
     onLongClick: (Long) -> Unit,
 ) {
     val color =
-        Color(category.colorArgb)
+        Color(
+            category.colorArgb
+        )
 
     Row(
         modifier = Modifier
             .background(
-                color.copy(alpha = 0.14f),
-                RoundedCornerShape(20.dp),
+                color.copy(
+                    alpha = 0.14f
+                ),
+                RoundedCornerShape(
+                    20.dp
+                ),
             )
             .combinedClickable(
                 onClick = {
-                    onClick(category.id)
+                    onClick(
+                        category.id
+                    )
                 },
                 onLongClick = {
-                    onLongClick(category.id)
+                    onLongClick(
+                        category.id
+                    )
                 },
             )
             .padding(
@@ -409,10 +574,12 @@ private fun CategoryChip(
         verticalAlignment =
             Alignment.CenterVertically,
         horizontalArrangement =
-            Arrangement.spacedBy(8.dp),
+            Arrangement.spacedBy(
+                8.dp
+            ),
     ) {
         Box(
-            Modifier
+            modifier = Modifier
                 .size(10.dp)
                 .background(
                     color,
@@ -421,101 +588,10 @@ private fun CategoryChip(
         )
 
         Text(
-            "${category.emoji} ${category.name}",
-            fontWeight = FontWeight.Medium,
+            text =
+                "${category.emoji} ${category.name}",
+            fontWeight =
+                FontWeight.Medium,
         )
-    }
-}
-
-@Composable
-private fun EntryCard(
-    entry: TimeEntry,
-    nowMillis: Long,
-) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment =
-                Alignment.CenterVertically,
-        ) {
-            Box(
-                Modifier
-                    .size(46.dp)
-                    .background(
-                        Color(
-                            entry.categoryColorArgb
-                        ).copy(alpha = 0.16f),
-                        CircleShape,
-                    ),
-                contentAlignment =
-                    Alignment.Center,
-            ) {
-                Text(
-                    entry.categoryEmoji,
-                    fontSize = 22.sp,
-                )
-            }
-
-            Spacer(Modifier.size(12.dp))
-
-            Column(
-                Modifier.weight(1f)
-            ) {
-                Text(
-                    entry.categoryName,
-                    fontWeight =
-                        FontWeight.SemiBold,
-                )
-
-                entry.taskName?.let {
-                    Text(
-                        text = it,
-                        color =
-                            MaterialTheme.colorScheme.primary,
-                        style =
-                            MaterialTheme.typography.bodyMedium,
-                    )
-                }
-
-                entry.note?.let { note ->
-                    Text(
-                        text = note,
-                        style =
-                            MaterialTheme.typography.bodySmall,
-                        color =
-                            MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                    )
-                }
-
-                Text(
-                    "${
-                        formatClockTime(
-                            entry.startTimeMillis
-                        )
-                    } – ${
-                        entry.endTimeMillis
-                            ?.let(::formatClockTime)
-                            ?: "сейчас"
-                    }",
-                    color =
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            Text(
-                formatDurationCompact(
-                    entry.durationMillis(
-                        nowMillis
-                    )
-                ),
-                fontWeight = FontWeight.Bold,
-            )
-        }
     }
 }
