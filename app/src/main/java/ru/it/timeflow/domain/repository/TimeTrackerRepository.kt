@@ -1,17 +1,25 @@
 package ru.it.timeflow.domain.repository
 
 import kotlinx.coroutines.flow.Flow
+import ru.it.timeflow.domain.model.ActivityTarget
 import ru.it.timeflow.domain.model.Category
 import ru.it.timeflow.domain.model.Task
 import ru.it.timeflow.domain.model.TimeEntry
 
 interface TimeTrackerRepository {
 
-    fun observeCategories(): Flow<List<Category>>
+    fun observeCategories():
+            Flow<List<Category>>
 
-    fun observeTasksByCategory(categoryId: Long): Flow<List<Task>>
+    fun observeTasksByCategory(
+        categoryId: Long
+    ): Flow<List<Task>>
 
-    fun observeActiveEntry(): Flow<TimeEntry?>
+    fun observeActivityTargets():
+            Flow<List<ActivityTarget>>
+
+    fun observeActiveEntry():
+            Flow<TimeEntry?>
 
     fun observeEntriesBetween(
         startMillis: Long,
@@ -42,6 +50,14 @@ interface TimeTrackerRepository {
         categoryId: Long,
         name: String,
     ): Long
+
+    suspend fun saveActivityTarget(
+        target: ActivityTarget,
+    )
+
+    suspend fun deleteActivityTarget(
+        categoryId: Long,
+    )
 
     suspend fun addManualEntry(
         categoryId: Long,
