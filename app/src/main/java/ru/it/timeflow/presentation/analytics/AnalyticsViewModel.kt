@@ -41,12 +41,16 @@ import kotlin.math.min
 class AnalyticsViewModel @Inject constructor(
     observeEntriesBetween:
     ObserveEntriesBetweenUseCase,
+
     observeCategories:
     ObserveCategoriesUseCase,
+
     observeActivityTargets:
     ObserveActivityTargetsUseCase,
+
     private val saveActivityTarget:
     SaveActivityTargetUseCase,
+
     private val deleteActivityTarget:
     DeleteActivityTargetUseCase,
 ) : ViewModel() {
@@ -66,7 +70,7 @@ class AnalyticsViewModel @Inject constructor(
                 TargetEditorRequest?
                 >(null)
 
-    private val entries =
+    private val periodEntries =
         selectedPeriod
             .flatMapLatest { period ->
 
@@ -81,14 +85,20 @@ class AnalyticsViewModel @Inject constructor(
                 )
             }
 
-    private val lifeTimeQueryStart =
-        System.currentTimeMillis() -
-                THIRTY_DAYS_MILLIS
+    private val longRangeQueryStart =
+        minOf(
+            System.currentTimeMillis() -
+                    THIRTY_DAYS_MILLIS,
 
-    private val lifeTimeEntries =
+            weekComparisonQueryStart(
+                System.currentTimeMillis()
+            )
+        )
+
+    private val longRangeEntries =
         observeEntriesBetween(
             startMillis =
-                lifeTimeQueryStart,
+                longRangeQueryStart,
             endMillis =
                 Long.MAX_VALUE,
         )
@@ -107,7 +117,8 @@ class AnalyticsViewModel @Inject constructor(
             .flatMapLatest { start ->
 
                 observeEntriesBetween(
-                    startMillis = start,
+                    startMillis =
+                        start,
                     endMillis =
                         Long.MAX_VALUE,
                 )
@@ -124,38 +135,74 @@ class AnalyticsViewModel @Inject constructor(
                 entries ->
 
             TargetData(
-                targets = targets,
-                categories = categories,
-                entries = entries,
+                targets =
+                    targets,
+                categories =
+                    categories,
+                entries =
+                    entries,
+            )
+        }
+
+    private val analyticsData =
+        combine(
+            periodEntries,
+            longRangeEntries,
+            targetData,
+        ) {
+                periodEntries,
+                longRangeEntries,
+                targetData ->
+
+            AnalyticsData(
+                periodEntries =
+                    periodEntries,
+                longRangeEntries =
+                    longRangeEntries,
+                targetData =
+                    targetData,
             )
         }
 
     private val contentState =
         combine(
-            entries,
-            lifeTimeEntries,
-            targetData,
+            analyticsData,
             selectedPeriod,
             nowMillis,
         ) {
-                entries,
-                lifeTimeEntries,
-                targetData,
+                analyticsData,
                 period,
                 now ->
 
             buildState(
-                entries = entries,
-                lifeTimeEntries =
-                    lifeTimeEntries,
+                periodEntries =
+                    analyticsData
+                        .periodEntries,
+
+                longRangeEntries =
+                    analyticsData
+                        .longRangeEntries,
+
                 targets =
-                    targetData.targets,
+                    analyticsData
+                        .targetData
+                        .targets,
+
                 categories =
-                    targetData.categories,
+                    analyticsData
+                        .targetData
+                        .categories,
+
                 targetEntries =
-                    targetData.entries,
-                period = period,
-                nowMillis = now,
+                    analyticsData
+                        .targetData
+                        .entries,
+
+                period =
+                    period,
+
+                nowMillis =
+                    now,
             )
         }
 
@@ -170,6 +217,7 @@ class AnalyticsViewModel @Inject constructor(
             content.copy(
                 isTargetEditorOpen =
                     editor != null,
+
                 editingTarget =
                     editor?.target,
             )
@@ -177,11 +225,13 @@ class AnalyticsViewModel @Inject constructor(
             .stateIn(
                 scope =
                     viewModelScope,
+
                 started =
                     SharingStarted
                         .WhileSubscribed(
                             5_000
                         ),
+
                 initialValue =
                     AnalyticsUiState(),
             )
@@ -201,7 +251,7 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     fun selectPeriod(
-        period: AnalyticsPeriod
+        period: AnalyticsPeriod,
     ) {
         selectedPeriod.value =
             period
@@ -215,11 +265,12 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     fun openEditTarget(
-        target: ActivityTarget
+        target: ActivityTarget,
     ) {
         targetEditorRequest.value =
             TargetEditorRequest(
-                target = target
+                target =
+                    target
             )
     }
 
@@ -230,8 +281,10 @@ class AnalyticsViewModel @Inject constructor(
 
     fun saveTarget(
         categoryId: Long,
-        type: ActivityTargetType,
-        period: ActivityTargetPeriod,
+        type:
+        ActivityTargetType,
+        period:
+        ActivityTargetPeriod,
         targetMillis: Long,
     ) {
         if (
@@ -260,7 +313,7 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     fun deleteTarget(
-        categoryId: Long
+        categoryId: Long,
     ) {
         viewModelScope.launch {
 
@@ -273,17 +326,26 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun buildState(
-        entries: List<TimeEntry>,
-        lifeTimeEntries:
+        periodEntries:
         List<TimeEntry>,
+
+        longRangeEntries:
+        List<TimeEntry>,
+
         targets:
         List<ActivityTarget>,
+
         categories:
         List<Category>,
+
         targetEntries:
         List<TimeEntry>,
-        period: AnalyticsPeriod,
-        nowMillis: Long,
+
+        period:
+        AnalyticsPeriod,
+
+        nowMillis:
+        Long,
     ): AnalyticsUiState {
 
         val bounds =
@@ -298,31 +360,34 @@ class AnalyticsViewModel @Inject constructor(
                 nowMillis,
             )
 
-        val durationsByCategory =
+        val periodSummaries =
             buildCategorySummaries(
-                entries = entries,
+                entries =
+                    periodEntries,
+
                 periodStart =
                     periodStart,
+
                 periodEnd =
                     periodEnd,
+
                 nowMillis =
                     nowMillis,
             )
 
         val totalMillis =
-            durationsByCategory
+            periodSummaries
                 .sumOf {
                     it.durationMillis
                 }
 
         val items =
-            durationsByCategory
+            periodSummaries
                 .map { summary ->
 
                     val percentage =
                         if (
-                            totalMillis >
-                            0L
+                            totalMillis > 0L
                         ) {
                             (
                                     summary
@@ -339,14 +404,19 @@ class AnalyticsViewModel @Inject constructor(
                     AnalyticsCategoryItem(
                         categoryId =
                             summary.categoryId,
+
                         name =
                             summary.name,
+
                         emoji =
                             summary.emoji,
+
                         colorArgb =
                             summary.colorArgb,
+
                         durationMillis =
                             summary.durationMillis,
+
                         percentage =
                             percentage,
                     )
@@ -359,11 +429,14 @@ class AnalyticsViewModel @Inject constructor(
         val lifeTimeSummaries =
             buildCategorySummaries(
                 entries =
-                    lifeTimeEntries,
+                    longRangeEntries,
+
                 periodStart =
                     lifeTimeStart,
+
                 periodEnd =
                     nowMillis,
+
                 nowMillis =
                     nowMillis,
             )
@@ -375,14 +448,19 @@ class AnalyticsViewModel @Inject constructor(
                     LifeTimeItem(
                         categoryId =
                             summary.categoryId,
+
                         name =
                             summary.name,
+
                         emoji =
                             summary.emoji,
+
                         colorArgb =
                             summary.colorArgb,
+
                         last30DaysMillis =
                             summary.durationMillis,
+
                         projectedYearDays =
                             projectedYearDays(
                                 summary
@@ -396,35 +474,67 @@ class AnalyticsViewModel @Inject constructor(
 
         val goalProgress =
             buildGoalProgress(
-                targets = targets,
-                categories = categories,
-                entries = targetEntries,
-                nowMillis = nowMillis,
+                targets =
+                    targets,
+
+                categories =
+                    categories,
+
+                entries =
+                    targetEntries,
+
+                nowMillis =
+                    nowMillis,
+            )
+
+        val weekComparison =
+            buildWeekComparison(
+                entries =
+                    longRangeEntries,
+
+                nowMillis =
+                    nowMillis,
             )
 
         return AnalyticsUiState(
             selectedPeriod =
                 period,
+
             items =
                 items,
+
             totalMillis =
                 totalMillis,
+
             periodTitle =
                 periodTitle(
-                    period = period,
+                    period =
+                        period,
+
                     nowMillis =
                         nowMillis,
                 ),
+
+            weekComparisonItems =
+                weekComparison.items,
+
+            weekComparisonSummary =
+                weekComparison.summary,
+
             lifeTimeItems =
                 lifeTimeItems,
+
             lifeTimeTotalMillis =
                 lifeTimeItems.sumOf {
                     it.last30DaysMillis
                 },
+
             categories =
                 categories,
+
             goalProgressItems =
                 goalProgress,
+
             isLoading =
                 false,
         )
@@ -433,11 +543,15 @@ class AnalyticsViewModel @Inject constructor(
     private fun buildGoalProgress(
         targets:
         List<ActivityTarget>,
+
         categories:
         List<Category>,
+
         entries:
         List<TimeEntry>,
-        nowMillis: Long,
+
+        nowMillis:
+        Long,
     ): List<GoalProgressItem> {
 
         return targets
@@ -456,6 +570,7 @@ class AnalyticsViewModel @Inject constructor(
                     targetBounds(
                         period =
                             target.period,
+
                         nowMillis =
                             nowMillis,
                     )
@@ -477,11 +592,15 @@ class AnalyticsViewModel @Inject constructor(
                         .sumOf { entry ->
 
                             overlapDuration(
-                                entry = entry,
+                                entry =
+                                    entry,
+
                                 periodStart =
                                     bounds.first,
+
                                 periodEnd =
                                     periodEnd,
+
                                 nowMillis =
                                     nowMillis,
                             )
@@ -489,7 +608,8 @@ class AnalyticsViewModel @Inject constructor(
 
                 val progress =
                     if (
-                        target.targetMillis >
+                        target
+                            .targetMillis >
                         0L
                     ) {
                         (
@@ -507,14 +627,19 @@ class AnalyticsViewModel @Inject constructor(
                 GoalProgressItem(
                     target =
                         target,
+
                     categoryName =
                         category.name,
+
                     categoryEmoji =
                         category.emoji,
+
                     categoryColorArgb =
                         category.colorArgb,
+
                     actualMillis =
                         actualMillis,
+
                     progressPercent =
                         progress,
                 )
@@ -524,16 +649,19 @@ class AnalyticsViewModel @Inject constructor(
                         GoalProgressItem
                         > {
                     it.target.type
-                }.thenBy {
-                    it.categoryName
                 }
+                    .thenBy {
+                        it.categoryName
+                    }
             )
     }
 
     private fun targetBounds(
         period:
         ActivityTargetPeriod,
-        nowMillis: Long,
+
+        nowMillis:
+        Long,
     ): Pair<Long, Long> {
 
         val date =
@@ -548,19 +676,27 @@ class AnalyticsViewModel @Inject constructor(
                 .toLocalDate()
 
         return when (period) {
+
             ActivityTargetPeriod.DAY ->
-                dayBoundsMillis(date)
+                dayBoundsMillis(
+                    date
+                )
 
             ActivityTargetPeriod.WEEK ->
-                weekBoundsMillis(date)
+                weekBoundsMillis(
+                    date
+                )
 
             ActivityTargetPeriod.MONTH ->
-                monthBoundsMillis(date)
+                monthBoundsMillis(
+                    date
+                )
         }
     }
 
     private fun earliestTargetPeriodStart(
-        nowMillis: Long
+        nowMillis:
+        Long,
     ): Long {
 
         val date =
@@ -578,9 +714,11 @@ class AnalyticsViewModel @Inject constructor(
             dayBoundsMillis(
                 date
             ).first,
+
             weekBoundsMillis(
                 date
             ).first,
+
             monthBoundsMillis(
                 date
             ).first,
@@ -588,10 +726,17 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun buildCategorySummaries(
-        entries: List<TimeEntry>,
-        periodStart: Long,
-        periodEnd: Long,
-        nowMillis: Long,
+        entries:
+        List<TimeEntry>,
+
+        periodStart:
+        Long,
+
+        periodEnd:
+        Long,
+
+        nowMillis:
+        Long,
     ): List<RawCategorySummary> {
 
         return entries
@@ -602,18 +747,24 @@ class AnalyticsViewModel @Inject constructor(
                     (_, group) ->
 
                 val first =
-                    group.firstOrNull()
+                    group
+                        .firstOrNull()
                         ?: return@mapNotNull null
 
                 val duration =
-                    group.sumOf { entry ->
+                    group.sumOf {
+                            entry ->
 
                         overlapDuration(
-                            entry = entry,
+                            entry =
+                                entry,
+
                             periodStart =
                                 periodStart,
+
                             periodEnd =
                                 periodEnd,
+
                             nowMillis =
                                 nowMillis,
                         )
@@ -627,12 +778,16 @@ class AnalyticsViewModel @Inject constructor(
                     RawCategorySummary(
                         categoryId =
                             first.categoryId,
+
                         name =
                             first.categoryName,
+
                         emoji =
                             first.categoryEmoji,
+
                         colorArgb =
                             first.categoryColorArgb,
+
                         durationMillis =
                             duration,
                     )
@@ -644,11 +799,13 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun projectedYearDays(
-        last30DaysMillis: Long
+        last30DaysMillis:
+        Long,
     ): Double {
 
         if (
-            last30DaysMillis <= 0L
+            last30DaysMillis <=
+            0L
         ) {
             return 0.0
         }
@@ -664,10 +821,17 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun overlapDuration(
-        entry: TimeEntry,
-        periodStart: Long,
-        periodEnd: Long,
-        nowMillis: Long,
+        entry:
+        TimeEntry,
+
+        periodStart:
+        Long,
+
+        periodEnd:
+        Long,
+
+        nowMillis:
+        Long,
     ): Long {
 
         val entryStart =
@@ -692,8 +856,11 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun periodTitle(
-        period: AnalyticsPeriod,
-        nowMillis: Long,
+        period:
+        AnalyticsPeriod,
+
+        nowMillis:
+        Long,
     ): String {
 
         val zone =
@@ -713,15 +880,20 @@ class AnalyticsViewModel @Inject constructor(
                 "Сегодня"
 
             AnalyticsPeriod.WEEK ->
-                weekTitle(date)
+                weekTitle(
+                    date
+                )
 
             AnalyticsPeriod.MONTH ->
-                monthTitle(date)
+                monthTitle(
+                    date
+                )
         }
     }
 
     private fun weekTitle(
-        date: LocalDate
+        date:
+        LocalDate,
     ): String {
 
         val start =
@@ -752,7 +924,8 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun monthTitle(
-        date: LocalDate
+        date:
+        LocalDate,
     ): String {
 
         val formatter =
@@ -776,20 +949,42 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private data class RawCategorySummary(
-        val categoryId: Long,
-        val name: String,
-        val emoji: String,
-        val colorArgb: Long,
-        val durationMillis: Long,
+        val categoryId:
+        Long,
+
+        val name:
+        String,
+
+        val emoji:
+        String,
+
+        val colorArgb:
+        Long,
+
+        val durationMillis:
+        Long,
     )
 
     private data class TargetData(
         val targets:
         List<ActivityTarget>,
+
         val categories:
         List<Category>,
+
         val entries:
         List<TimeEntry>,
+    )
+
+    private data class AnalyticsData(
+        val periodEntries:
+        List<TimeEntry>,
+
+        val longRangeEntries:
+        List<TimeEntry>,
+
+        val targetData:
+        TargetData,
     )
 
     private data class TargetEditorRequest(

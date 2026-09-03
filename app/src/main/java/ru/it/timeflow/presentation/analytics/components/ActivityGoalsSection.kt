@@ -32,61 +32,65 @@ import java.util.Locale
 
 @Composable
 fun ActivityGoalsSection(
-    items: List<GoalProgressItem>,
-    canAddTarget: Boolean,
-    onAddTarget: () -> Unit,
+    items:
+    List<GoalProgressItem>,
+
+    canAddTarget:
+    Boolean,
+
+    onAddTarget:
+        () -> Unit,
+
     onEditTarget:
         (ActivityTarget) -> Unit,
-    modifier: Modifier = Modifier,
+
+    modifier:
+    Modifier = Modifier,
 ) {
     Column(
         modifier =
             modifier.fillMaxWidth(),
+
         verticalArrangement =
             Arrangement.spacedBy(
                 12.dp
             ),
     ) {
-        Row(
-            modifier =
-                Modifier.fillMaxWidth(),
-            verticalAlignment =
-                Alignment.CenterVertically,
+        Text(
+            text =
+                "Цели и лимиты",
+
+            style =
+                MaterialTheme
+                    .typography
+                    .headlineSmall,
+
+            fontWeight =
+                FontWeight.Bold,
+        )
+
+        Text(
+            text =
+                "Контролируйте, чему хотите уделять больше или меньше времени.",
+
+            style =
+                MaterialTheme
+                    .typography
+                    .bodySmall,
+
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .onSurfaceVariant,
+        )
+
+        if (
+            items.isEmpty()
         ) {
-            Column(
-                modifier =
-                    Modifier.weight(1f),
-            ) {
-                Text(
-                    text =
-                        "Цели и лимиты",
-                    style =
-                        MaterialTheme
-                            .typography
-                            .headlineSmall,
-                    fontWeight =
-                        FontWeight.Bold,
-                )
-
-                Text(
-                    text =
-                        "Контролируйте, чему хотите уделять больше или меньше времени.",
-                    style =
-                        MaterialTheme
-                            .typography
-                            .bodySmall,
-                    color =
-                        MaterialTheme
-                            .colorScheme
-                            .onSurfaceVariant,
-                )
-            }
-        }
-
-        if (items.isEmpty()) {
             Card(
                 modifier =
                     Modifier.fillMaxWidth(),
+
                 shape =
                     RoundedCornerShape(
                         20.dp
@@ -101,17 +105,21 @@ fun ActivityGoalsSection(
                     Text(
                         text =
                             "Пока нет целей и лимитов.",
+
                         fontWeight =
                             FontWeight.SemiBold,
                     )
 
                     Spacer(
-                        Modifier.height(4.dp)
+                        Modifier.height(
+                            4.dp
+                        )
                     )
 
                     Text(
                         text =
                             "Например: 5 часов спорта в неделю или не больше 7 часов игр.",
+
                         color =
                             MaterialTheme
                                 .colorScheme
@@ -120,9 +128,13 @@ fun ActivityGoalsSection(
                 }
             }
         } else {
-            items.forEach { item ->
+            items.forEach {
+                    item ->
+
                 ActivityGoalCard(
-                    item = item,
+                    item =
+                        item,
+
                     onClick = {
                         onEditTarget(
                             item.target
@@ -135,8 +147,10 @@ fun ActivityGoalsSection(
         OutlinedButton(
             modifier =
                 Modifier.fillMaxWidth(),
+
             enabled =
                 canAddTarget,
+
             onClick =
                 onAddTarget,
         ) {
@@ -153,8 +167,11 @@ fun ActivityGoalsSection(
 
 @Composable
 private fun ActivityGoalCard(
-    item: GoalProgressItem,
-    onClick: () -> Unit,
+    item:
+    GoalProgressItem,
+
+    onClick:
+        () -> Unit,
 ) {
     val isLimit =
         item.target.type ==
@@ -182,10 +199,12 @@ private fun ActivityGoalCard(
                 .clickable(
                     onClick = onClick
                 ),
+
         shape =
             RoundedCornerShape(
                 20.dp
             ),
+
         colors =
             CardDefaults.cardColors(
                 containerColor =
@@ -198,30 +217,36 @@ private fun ActivityGoalCard(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(
+                        16.dp
+                    ),
         ) {
             Row(
                 modifier =
                     Modifier.fillMaxWidth(),
+
                 verticalAlignment =
                     Alignment.CenterVertically,
             ) {
                 Box(
                     modifier =
                         Modifier
-                            .size(44.dp)
+                            .size(
+                                44.dp
+                            )
                             .background(
                                 color =
                                     Color(
-                                        item
-                                            .categoryColorArgb
+                                        item.categoryColorArgb
                                     ).copy(
                                         alpha =
                                             0.16f
                                     ),
+
                                 shape =
                                     CircleShape,
                             ),
+
                     contentAlignment =
                         Alignment.Center,
                 ) {
@@ -232,16 +257,21 @@ private fun ActivityGoalCard(
                 }
 
                 Spacer(
-                    Modifier.size(12.dp)
+                    Modifier.size(
+                        12.dp
+                    )
                 )
 
                 Column(
                     modifier =
-                        Modifier.weight(1f),
+                        Modifier.weight(
+                            1f
+                        ),
                 ) {
                     Text(
                         text =
                             item.categoryName,
+
                         fontWeight =
                             FontWeight.SemiBold,
                     )
@@ -253,10 +283,12 @@ private fun ActivityGoalCard(
                                     item.target.targetMillis
                                 )
                             } ${item.target.period.shortTitle}",
+
                         style =
                             MaterialTheme
                                 .typography
                                 .bodySmall,
+
                         color =
                             MaterialTheme
                                 .colorScheme
@@ -269,15 +301,19 @@ private fun ActivityGoalCard(
                         formatPercent(
                             item.progressPercent
                         ),
+
                     fontWeight =
                         FontWeight.Bold,
+
                     color =
                         progressColor,
                 )
             }
 
             Spacer(
-                Modifier.height(14.dp)
+                Modifier.height(
+                    14.dp
+                )
             )
 
             Text(
@@ -291,28 +327,35 @@ private fun ActivityGoalCard(
                             item.target.targetMillis
                         )
                     }",
+
                 style =
                     MaterialTheme
                         .typography
                         .bodyMedium,
+
                 fontWeight =
                     FontWeight.Medium,
             )
 
             Spacer(
-                Modifier.height(8.dp)
+                Modifier.height(
+                    8.dp
+                )
             )
 
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(9.dp)
+                        .height(
+                            9.dp
+                        )
                         .background(
                             color =
                                 MaterialTheme
                                     .colorScheme
                                     .surfaceVariant,
+
                             shape =
                                 RoundedCornerShape(
                                     99.dp
@@ -323,13 +366,15 @@ private fun ActivityGoalCard(
                     modifier =
                         Modifier
                             .fillMaxWidth(
-                                item
-                                    .progressFraction
+                                item.progressFraction
                             )
-                            .height(9.dp)
+                            .height(
+                                9.dp
+                            )
                             .background(
                                 color =
                                     progressColor,
+
                                 shape =
                                     RoundedCornerShape(
                                         99.dp
@@ -339,7 +384,9 @@ private fun ActivityGoalCard(
             }
 
             Spacer(
-                Modifier.height(8.dp)
+                Modifier.height(
+                    8.dp
+                )
             )
 
             Text(
@@ -347,10 +394,12 @@ private fun ActivityGoalCard(
                     targetStatusText(
                         item
                     ),
+
                 style =
                     MaterialTheme
                         .typography
                         .bodySmall,
+
                 color =
                     if (isExceeded) {
                         MaterialTheme
@@ -361,6 +410,7 @@ private fun ActivityGoalCard(
                             .colorScheme
                             .onSurfaceVariant
                     },
+
                 fontWeight =
                     if (
                         isExceeded ||
@@ -379,14 +429,16 @@ private fun ActivityGoalCard(
 }
 
 private fun targetStatusText(
-    item: GoalProgressItem
-): String {
-
-    return when (
+    item:
+    GoalProgressItem,
+): String =
+    when (
         item.target.type
     ) {
         ActivityTargetType.GOAL -> {
-            if (item.isReached) {
+            if (
+                item.isReached
+            ) {
                 "Цель выполнена"
             } else {
                 "Осталось ${
@@ -416,10 +468,10 @@ private fun targetStatusText(
             }
         }
     }
-}
 
 private fun formatPercent(
-    value: Float
+    value:
+    Float,
 ): String =
     String.format(
         Locale.US,

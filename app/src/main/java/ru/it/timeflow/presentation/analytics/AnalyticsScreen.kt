@@ -37,13 +37,15 @@ import ru.it.timeflow.domain.model.ActivityTargetType
 import ru.it.timeflow.presentation.analytics.components.ActivityGoalsSection
 import ru.it.timeflow.presentation.analytics.components.ActivityTargetBottomSheet
 import ru.it.timeflow.presentation.analytics.components.TimeDistributionPieChart
+import ru.it.timeflow.presentation.analytics.components.WeekComparisonSection
 import ru.it.timeflow.util.formatDurationCompact
 import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
 fun AnalyticsRoute(
-    viewModel: AnalyticsViewModel =
+    viewModel:
+    AnalyticsViewModel =
         hiltViewModel(),
 ) {
     val state by
@@ -52,17 +54,24 @@ fun AnalyticsRoute(
         .collectAsStateWithLifecycle()
 
     AnalyticsScreen(
-        state = state,
+        state =
+            state,
+
         onPeriodSelected =
             viewModel::selectPeriod,
+
         onAddTarget =
             viewModel::openCreateTarget,
+
         onEditTarget =
             viewModel::openEditTarget,
+
         onDismissTargetEditor =
             viewModel::closeTargetEditor,
+
         onSaveTarget =
             viewModel::saveTarget,
+
         onDeleteTarget =
             viewModel::deleteTarget,
     )
@@ -70,52 +79,71 @@ fun AnalyticsRoute(
 
 @Composable
 fun AnalyticsScreen(
-    state: AnalyticsUiState,
+    state:
+    AnalyticsUiState,
+
     onPeriodSelected:
         (AnalyticsPeriod) -> Unit,
-    onAddTarget: () -> Unit,
+
+    onAddTarget:
+        () -> Unit,
+
     onEditTarget:
         (ActivityTarget) -> Unit,
-    onDismissTargetEditor: () -> Unit,
+
+    onDismissTargetEditor:
+        () -> Unit,
+
     onSaveTarget: (
         categoryId: Long,
         type: ActivityTargetType,
         period: ActivityTargetPeriod,
         targetMillis: Long,
     ) -> Unit,
+
     onDeleteTarget:
         (Long) -> Unit,
 ) {
-    if (state.isLoading) {
+    if (
+        state.isLoading
+    ) {
         Box(
             modifier =
                 Modifier.fillMaxSize(),
+
             contentAlignment =
                 Alignment.Center,
         ) {
             CircularProgressIndicator()
         }
+
         return
     }
 
     LazyColumn(
         modifier =
             Modifier.fillMaxSize(),
+
         contentPadding =
-            PaddingValues(20.dp),
+            PaddingValues(
+                20.dp
+            ),
+
         verticalArrangement =
             Arrangement.spacedBy(
                 16.dp
             ),
     ) {
-
         item {
             Text(
-                text = "Аналитика",
+                text =
+                    "Аналитика",
+
                 style =
                     MaterialTheme
                         .typography
                         .headlineLarge,
+
                 fontWeight =
                     FontWeight.Bold,
             )
@@ -123,10 +151,12 @@ fun AnalyticsScreen(
             Text(
                 text =
                     state.periodTitle,
+
                 style =
                     MaterialTheme
                         .typography
                         .bodyLarge,
+
                 color =
                     MaterialTheme
                         .colorScheme
@@ -138,6 +168,7 @@ fun AnalyticsScreen(
             PeriodSelector(
                 selectedPeriod =
                     state.selectedPeriod,
+
                 onPeriodSelected =
                     onPeriodSelected,
             )
@@ -154,10 +185,12 @@ fun AnalyticsScreen(
             Text(
                 text =
                     "Распределение времени",
+
                 style =
                     MaterialTheme
                         .typography
                         .titleLarge,
+
                 fontWeight =
                     FontWeight.SemiBold,
             )
@@ -167,10 +200,12 @@ fun AnalyticsScreen(
             Card(
                 modifier =
                     Modifier.fillMaxWidth(),
+
                 shape =
                     RoundedCornerShape(
                         24.dp
                     ),
+
                 colors =
                     CardDefaults
                         .cardColors(
@@ -184,41 +219,50 @@ fun AnalyticsScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(
+                                20.dp
+                            ),
+
                     horizontalAlignment =
                         Alignment.CenterHorizontally,
                 ) {
-
                     TimeDistributionPieChart(
                         items =
                             state.items,
+
                         totalMillis =
                             state.totalMillis,
                     )
 
                     Spacer(
-                        Modifier.height(12.dp)
+                        Modifier.height(
+                            12.dp
+                        )
                     )
 
                     if (
-                        state.items.isEmpty()
+                        state.items
+                            .isEmpty()
                     ) {
                         Text(
                             text =
                                 "За выбранный период пока нет данных.",
+
                             color =
                                 MaterialTheme
                                     .colorScheme
                                     .onSurfaceVariant,
                         )
                     } else {
-                        state.items.forEach {
-                                item ->
+                        state.items
+                            .forEach {
+                                    item ->
 
-                            ChartLegendRow(
-                                item = item,
-                            )
-                        }
+                                ChartLegendRow(
+                                    item =
+                                        item
+                                )
+                            }
                     }
                 }
             }
@@ -228,10 +272,12 @@ fun AnalyticsScreen(
             Text(
                 text =
                     "По категориям",
+
                 style =
                     MaterialTheme
                         .typography
                         .titleLarge,
+
                 fontWeight =
                     FontWeight.SemiBold,
             )
@@ -240,13 +286,16 @@ fun AnalyticsScreen(
         items(
             items =
                 state.items,
+
             key = {
                 it.categoryId
             },
-        ) { item ->
+        ) {
+                item ->
 
             CategoryStatisticsCard(
-                item = item,
+                item =
+                    item
             )
         }
 
@@ -257,6 +306,7 @@ fun AnalyticsScreen(
                 Text(
                     text =
                         "Статистика появится после первой записи времени.",
+
                     color =
                         MaterialTheme
                             .colorScheme
@@ -267,16 +317,37 @@ fun AnalyticsScreen(
 
         item {
             Spacer(
-                Modifier.height(4.dp)
+                Modifier.height(
+                    4.dp
+                )
+            )
+
+            WeekComparisonSection(
+                items =
+                    state.weekComparisonItems,
+
+                summary =
+                    state.weekComparisonSummary,
+            )
+        }
+
+        item {
+            Spacer(
+                Modifier.height(
+                    4.dp
+                )
             )
 
             ActivityGoalsSection(
                 items =
                     state.goalProgressItems,
+
                 canAddTarget =
                     state.canAddTarget,
+
                 onAddTarget =
                     onAddTarget,
+
                 onEditTarget =
                     onEditTarget,
             )
@@ -284,7 +355,9 @@ fun AnalyticsScreen(
 
         item {
             Spacer(
-                Modifier.height(6.dp)
+                Modifier.height(
+                    6.dp
+                )
             )
 
             LifeTimeSection(
@@ -295,7 +368,9 @@ fun AnalyticsScreen(
 
         item {
             Spacer(
-                Modifier.height(12.dp)
+                Modifier.height(
+                    12.dp
+                )
             )
         }
     }
@@ -306,285 +381,27 @@ fun AnalyticsScreen(
         ActivityTargetBottomSheet(
             categories =
                 state.categories,
+
             editingTarget =
                 state.editingTarget,
+
             usedCategoryIds =
-                state.goalProgressItems
+                state
+                    .goalProgressItems
                     .map {
                         it.target
                             .categoryId
                     }
                     .toSet(),
+
             onSave =
                 onSaveTarget,
+
             onDelete =
                 onDeleteTarget,
+
             onDismiss =
                 onDismissTargetEditor,
-        )
-    }
-}
-
-@Composable
-private fun LifeTimeSection(
-    items: List<LifeTimeItem>,
-) {
-    Column(
-        modifier =
-            Modifier.fillMaxWidth(),
-        verticalArrangement =
-            Arrangement.spacedBy(
-                12.dp
-            ),
-    ) {
-        Text(
-            text = "Время жизни",
-            style =
-                MaterialTheme
-                    .typography
-                    .headlineSmall,
-            fontWeight =
-                FontWeight.Bold,
-        )
-
-        Text(
-            text =
-                "За последние 30 дней вы потратили:",
-            style =
-                MaterialTheme
-                    .typography
-                    .bodyLarge,
-            color =
-                MaterialTheme
-                    .colorScheme
-                    .onSurfaceVariant,
-        )
-
-        if (items.isEmpty()) {
-            Card(
-                modifier =
-                    Modifier.fillMaxWidth(),
-                shape =
-                    RoundedCornerShape(
-                        20.dp
-                    ),
-            ) {
-                Text(
-                    text =
-                        "Пока недостаточно данных. Начните отслеживать занятия, и здесь появится прогноз.",
-                    modifier =
-                        Modifier.padding(
-                            18.dp
-                        ),
-                    color =
-                        MaterialTheme
-                            .colorScheme
-                            .onSurfaceVariant,
-                )
-            }
-
-            return@Column
-        }
-
-        Card(
-            modifier =
-                Modifier.fillMaxWidth(),
-            shape =
-                RoundedCornerShape(
-                    22.dp
-                ),
-            colors =
-                CardDefaults.cardColors(
-                    containerColor =
-                        MaterialTheme
-                            .colorScheme
-                            .surfaceContainer,
-                ),
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                verticalArrangement =
-                    Arrangement.spacedBy(
-                        12.dp
-                    ),
-            ) {
-                items.forEach { item ->
-
-                    LifeTimeLast30DaysRow(
-                        item = item,
-                    )
-                }
-            }
-        }
-
-        Spacer(
-            Modifier.height(4.dp)
-        )
-
-        Text(
-            text =
-                "Если продолжить в таком темпе, за год:",
-            style =
-                MaterialTheme
-                    .typography
-                    .bodyLarge,
-            color =
-                MaterialTheme
-                    .colorScheme
-                    .onSurfaceVariant,
-        )
-
-        Card(
-            modifier =
-                Modifier.fillMaxWidth(),
-            shape =
-                RoundedCornerShape(
-                    22.dp
-                ),
-            colors =
-                CardDefaults.cardColors(
-                    containerColor =
-                        MaterialTheme
-                            .colorScheme
-                            .primaryContainer,
-                ),
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                verticalArrangement =
-                    Arrangement.spacedBy(
-                        12.dp
-                    ),
-            ) {
-                items.forEach { item ->
-
-                    LifeTimeYearProjectionRow(
-                        item = item,
-                    )
-                }
-            }
-        }
-
-        Text(
-            text =
-                "Прогноз рассчитан по среднему темпу последних 30 дней.",
-            style =
-                MaterialTheme
-                    .typography
-                    .bodySmall,
-            color =
-                MaterialTheme
-                    .colorScheme
-                    .onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun LifeTimeLast30DaysRow(
-    item: LifeTimeItem,
-) {
-    Row(
-        modifier =
-            Modifier.fillMaxWidth(),
-        verticalAlignment =
-            Alignment.CenterVertically,
-    ) {
-        LifeTimeCategoryMarker(
-            item = item,
-        )
-
-        Spacer(
-            Modifier.size(10.dp)
-        )
-
-        Text(
-            text = item.name,
-            modifier =
-                Modifier.weight(1f),
-            fontWeight =
-                FontWeight.Medium,
-        )
-
-        Text(
-            text =
-                formatLifeTimeHours(
-                    item.last30DaysMillis
-                ),
-            fontWeight =
-                FontWeight.Bold,
-        )
-    }
-}
-
-@Composable
-private fun LifeTimeYearProjectionRow(
-    item: LifeTimeItem,
-) {
-    Row(
-        modifier =
-            Modifier.fillMaxWidth(),
-        verticalAlignment =
-            Alignment.CenterVertically,
-    ) {
-        LifeTimeCategoryMarker(
-            item = item,
-        )
-
-        Spacer(
-            Modifier.size(10.dp)
-        )
-
-        Text(
-            text = item.name,
-            modifier =
-                Modifier.weight(1f),
-            fontWeight =
-                FontWeight.Medium,
-        )
-
-        Text(
-            text =
-                formatProjectedDays(
-                    item.projectedYearDays
-                ),
-            fontWeight =
-                FontWeight.Bold,
-        )
-    }
-}
-
-@Composable
-private fun LifeTimeCategoryMarker(
-    item: LifeTimeItem,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(36.dp)
-                .background(
-                    color =
-                        Color(
-                            item.colorArgb
-                        ).copy(
-                            alpha =
-                                0.16f
-                        ),
-                    shape =
-                        CircleShape,
-                ),
-        contentAlignment =
-            Alignment.Center,
-    ) {
-        Text(
-            text =
-                item.emoji
         )
     }
 }
@@ -593,12 +410,14 @@ private fun LifeTimeCategoryMarker(
 private fun PeriodSelector(
     selectedPeriod:
     AnalyticsPeriod,
+
     onPeriodSelected:
         (AnalyticsPeriod) -> Unit,
 ) {
     Row(
         modifier =
             Modifier.fillMaxWidth(),
+
         horizontalArrangement =
             Arrangement.spacedBy(
                 8.dp
@@ -606,24 +425,30 @@ private fun PeriodSelector(
     ) {
         AnalyticsPeriod
             .entries
-            .forEach { period ->
+            .forEach {
+                    period ->
 
                 FilterChip(
                     selected =
                         selectedPeriod ==
                                 period,
+
                     onClick = {
                         onPeriodSelected(
                             period
                         )
                     },
+
                     label = {
                         Text(
                             period.title
                         )
                     },
+
                     modifier =
-                        Modifier.weight(1f),
+                        Modifier.weight(
+                            1f
+                        ),
                 )
             }
     }
@@ -631,15 +456,18 @@ private fun PeriodSelector(
 
 @Composable
 private fun TotalTimeCard(
-    totalMillis: Long,
+    totalMillis:
+    Long,
 ) {
     Card(
         modifier =
             Modifier.fillMaxWidth(),
+
         shape =
             RoundedCornerShape(
                 22.dp
             ),
+
         colors =
             CardDefaults.cardColors(
                 containerColor =
@@ -657,10 +485,12 @@ private fun TotalTimeCard(
             Text(
                 text =
                     "Учтено времени",
+
                 style =
                     MaterialTheme
                         .typography
                         .bodyMedium,
+
                 color =
                     MaterialTheme
                         .colorScheme
@@ -668,7 +498,9 @@ private fun TotalTimeCard(
             )
 
             Spacer(
-                Modifier.height(4.dp)
+                Modifier.height(
+                    4.dp
+                )
             )
 
             Text(
@@ -676,10 +508,12 @@ private fun TotalTimeCard(
                     formatDurationCompact(
                         totalMillis
                     ),
+
                 style =
                     MaterialTheme
                         .typography
                         .headlineMedium,
+
                 fontWeight =
                     FontWeight.Bold,
             )
@@ -689,41 +523,53 @@ private fun TotalTimeCard(
 
 @Composable
 private fun ChartLegendRow(
-    item: AnalyticsCategoryItem,
+    item:
+    AnalyticsCategoryItem,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .padding(
-                    vertical = 7.dp
+                    vertical =
+                        7.dp
                 ),
+
         verticalAlignment =
             Alignment.CenterVertically,
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(12.dp)
+                    .size(
+                        12.dp
+                    )
                     .background(
                         color =
                             Color(
                                 item.colorArgb
                             ),
+
                         shape =
                             CircleShape,
                     )
         )
 
         Spacer(
-            Modifier.size(10.dp)
+            Modifier.size(
+                10.dp
+            )
         )
 
         Text(
             text =
                 "${item.emoji} ${item.name}",
+
             modifier =
-                Modifier.weight(1f),
+                Modifier.weight(
+                    1f
+                ),
+
             style =
                 MaterialTheme
                     .typography
@@ -735,6 +581,7 @@ private fun ChartLegendRow(
                 formatPercentage(
                     item.percentage
                 ),
+
             fontWeight =
                 FontWeight.Bold,
         )
@@ -743,11 +590,13 @@ private fun ChartLegendRow(
 
 @Composable
 private fun CategoryStatisticsCard(
-    item: AnalyticsCategoryItem,
+    item:
+    AnalyticsCategoryItem,
 ) {
     Card(
         modifier =
             Modifier.fillMaxWidth(),
+
         shape =
             RoundedCornerShape(
                 20.dp
@@ -757,18 +606,23 @@ private fun CategoryStatisticsCard(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(
+                        16.dp
+                    ),
         ) {
             Row(
                 modifier =
                     Modifier.fillMaxWidth(),
+
                 verticalAlignment =
                     Alignment.CenterVertically,
             ) {
                 Box(
                     modifier =
                         Modifier
-                            .size(42.dp)
+                            .size(
+                                42.dp
+                            )
                             .background(
                                 color =
                                     Color(
@@ -777,9 +631,11 @@ private fun CategoryStatisticsCard(
                                         alpha =
                                             0.15f
                                     ),
+
                                 shape =
                                     CircleShape,
                             ),
+
                     contentAlignment =
                         Alignment.Center,
                 ) {
@@ -790,16 +646,21 @@ private fun CategoryStatisticsCard(
                 }
 
                 Spacer(
-                    Modifier.size(12.dp)
+                    Modifier.size(
+                        12.dp
+                    )
                 )
 
                 Column(
                     modifier =
-                        Modifier.weight(1f),
+                        Modifier.weight(
+                            1f
+                        ),
                 ) {
                     Text(
                         text =
                             item.name,
+
                         fontWeight =
                             FontWeight.SemiBold,
                     )
@@ -809,6 +670,7 @@ private fun CategoryStatisticsCard(
                             formatDurationCompact(
                                 item.durationMillis
                             ),
+
                         color =
                             MaterialTheme
                                 .colorScheme
@@ -821,12 +683,15 @@ private fun CategoryStatisticsCard(
                         formatPercentage(
                             item.percentage
                         ),
+
                     style =
                         MaterialTheme
                             .typography
                             .titleMedium,
+
                     fontWeight =
                         FontWeight.Bold,
+
                     color =
                         Color(
                             item.colorArgb
@@ -835,19 +700,24 @@ private fun CategoryStatisticsCard(
             }
 
             Spacer(
-                Modifier.height(14.dp)
+                Modifier.height(
+                    14.dp
+                )
             )
 
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(9.dp)
+                        .height(
+                            9.dp
+                        )
                         .background(
                             color =
                                 MaterialTheme
                                     .colorScheme
                                     .surfaceVariant,
+
                             shape =
                                 RoundedCornerShape(
                                     99.dp
@@ -866,12 +736,15 @@ private fun CategoryStatisticsCard(
                                         1f
                                     )
                             )
-                            .height(9.dp)
+                            .height(
+                                9.dp
+                            )
                             .background(
                                 color =
                                     Color(
                                         item.colorArgb
                                     ),
+
                                 shape =
                                     RoundedCornerShape(
                                         99.dp
@@ -883,13 +756,338 @@ private fun CategoryStatisticsCard(
     }
 }
 
+@Composable
+private fun LifeTimeSection(
+    items:
+    List<LifeTimeItem>,
+) {
+    Column(
+        modifier =
+            Modifier.fillMaxWidth(),
+
+        verticalArrangement =
+            Arrangement.spacedBy(
+                12.dp
+            ),
+    ) {
+        Text(
+            text =
+                "Время жизни",
+
+            style =
+                MaterialTheme
+                    .typography
+                    .headlineSmall,
+
+            fontWeight =
+                FontWeight.Bold,
+        )
+
+        Text(
+            text =
+                "За последние 30 дней вы потратили:",
+
+            style =
+                MaterialTheme
+                    .typography
+                    .bodyLarge,
+
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .onSurfaceVariant,
+        )
+
+        if (
+            items.isEmpty()
+        ) {
+            Card(
+                modifier =
+                    Modifier.fillMaxWidth(),
+
+                shape =
+                    RoundedCornerShape(
+                        20.dp
+                    ),
+            ) {
+                Text(
+                    text =
+                        "Пока недостаточно данных. Начните отслеживать занятия, и здесь появится прогноз.",
+
+                    modifier =
+                        Modifier.padding(
+                            18.dp
+                        ),
+
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant,
+                )
+            }
+
+            return@Column
+        }
+
+        Card(
+            modifier =
+                Modifier.fillMaxWidth(),
+
+            shape =
+                RoundedCornerShape(
+                    22.dp
+                ),
+
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme
+                            .colorScheme
+                            .surfaceContainer,
+                ),
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            18.dp
+                        ),
+
+                verticalArrangement =
+                    Arrangement.spacedBy(
+                        12.dp
+                    ),
+            ) {
+                items.forEach {
+                        item ->
+
+                    LifeTimeLast30DaysRow(
+                        item =
+                            item
+                    )
+                }
+            }
+        }
+
+        Spacer(
+            Modifier.height(
+                4.dp
+            )
+        )
+
+        Text(
+            text =
+                "Если продолжить в таком темпе, за год:",
+
+            style =
+                MaterialTheme
+                    .typography
+                    .bodyLarge,
+
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .onSurfaceVariant,
+        )
+
+        Card(
+            modifier =
+                Modifier.fillMaxWidth(),
+
+            shape =
+                RoundedCornerShape(
+                    22.dp
+                ),
+
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme
+                            .colorScheme
+                            .primaryContainer,
+                ),
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            18.dp
+                        ),
+
+                verticalArrangement =
+                    Arrangement.spacedBy(
+                        12.dp
+                    ),
+            ) {
+                items.forEach {
+                        item ->
+
+                    LifeTimeYearProjectionRow(
+                        item =
+                            item
+                    )
+                }
+            }
+        }
+
+        Text(
+            text =
+                "Прогноз рассчитан по среднему темпу последних 30 дней.",
+
+            style =
+                MaterialTheme
+                    .typography
+                    .bodySmall,
+
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun LifeTimeLast30DaysRow(
+    item:
+    LifeTimeItem,
+) {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth(),
+
+        verticalAlignment =
+            Alignment.CenterVertically,
+    ) {
+        LifeTimeCategoryMarker(
+            item =
+                item
+        )
+
+        Spacer(
+            Modifier.size(
+                10.dp
+            )
+        )
+
+        Text(
+            text =
+                item.name,
+
+            modifier =
+                Modifier.weight(
+                    1f
+                ),
+
+            fontWeight =
+                FontWeight.Medium,
+        )
+
+        Text(
+            text =
+                formatLifeTimeHours(
+                    item.last30DaysMillis
+                ),
+
+            fontWeight =
+                FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun LifeTimeYearProjectionRow(
+    item:
+    LifeTimeItem,
+) {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth(),
+
+        verticalAlignment =
+            Alignment.CenterVertically,
+    ) {
+        LifeTimeCategoryMarker(
+            item =
+                item
+        )
+
+        Spacer(
+            Modifier.size(
+                10.dp
+            )
+        )
+
+        Text(
+            text =
+                item.name,
+
+            modifier =
+                Modifier.weight(
+                    1f
+                ),
+
+            fontWeight =
+                FontWeight.Medium,
+        )
+
+        Text(
+            text =
+                formatProjectedDays(
+                    item.projectedYearDays
+                ),
+
+            fontWeight =
+                FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun LifeTimeCategoryMarker(
+    item:
+    LifeTimeItem,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(
+                    36.dp
+                )
+                .background(
+                    color =
+                        Color(
+                            item.colorArgb
+                        ).copy(
+                            alpha =
+                                0.16f
+                        ),
+
+                    shape =
+                        CircleShape,
+                ),
+
+        contentAlignment =
+            Alignment.Center,
+    ) {
+        Text(
+            text =
+                item.emoji
+        )
+    }
+}
+
 private fun formatPercentage(
-    value: Float
+    value:
+    Float,
 ): String {
 
     return if (
         value >= 10f ||
-        value % 1f == 0f
+        value % 1f ==
+        0f
     ) {
         String.format(
             Locale.US,
@@ -906,7 +1104,8 @@ private fun formatPercentage(
 }
 
 private fun formatLifeTimeHours(
-    millis: Long
+    millis:
+    Long,
 ): String {
 
     val hours =
@@ -927,7 +1126,8 @@ private fun formatLifeTimeHours(
 }
 
 private fun formatProjectedDays(
-    days: Double
+    days:
+    Double,
 ): String {
 
     return when {
